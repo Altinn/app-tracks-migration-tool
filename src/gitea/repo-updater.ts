@@ -1,6 +1,8 @@
 import { exec } from "node:child_process";
 import { readdirSync } from "node:fs";
 
+const GITEA_TOKEN = process.env["GITEA_TOKEN"];
+
 /**
  * Update the hidden property on a specific page given the page name and the expression to put in the hidden property.
  *
@@ -19,7 +21,7 @@ export async function updatePageHidden({ page, expression }: UpdateHiddenArgs) {
   return "void";
 }
 
-export async function checkoutBranch(path = "./") {
+export async function checkoutBranch() {
   const branchName = `v4-automatic-tracks-migration-${Date.now()}`;
   await asyncExec(`git checkout -b ${branchName}`);
   return branchName;
@@ -48,14 +50,13 @@ export async function draftPullRequest(branchName: string) {
       headers: {
         accept: "application/json",
         "Content-Type": "application/json",
-        Authorization: `token ${process.env.GITEA_TOKEN}`,
+        Authorization: `token ${GITEA_TOKEN}`,
       },
       body: JSON.stringify({
         base: "master",
         head: branchName,
         title: "Automatic tracks migration (generated with AI)",
-        description:
-          "This PR is generated with an AI tool. This tool uses LLMs to look at the contents of files implementing IPageOrder and then generates the necessary code changes to preserve the behavior with dynamic expressions.",
+        body: "This PR is generated with an AI tool. This tool uses LLMs to look at the contents of files implementing IPageOrder and then generates the necessary code changes to preserve the behavior with dynamic expressions.",
       }),
     },
   );
