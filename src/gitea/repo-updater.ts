@@ -3,45 +3,59 @@ import { readdirSync } from "node:fs";
 
 const GITEA_TOKEN = process.env["GITEA_TOKEN"];
 
+type UpdateHiddenArgs = {
+  page: string;
+  expression: string;
+};
+
 /**
  * Update the hidden property on a specific page given the page name and the expression to put in the hidden property.
  *
  * @param page
  * @param expression
  */
-type UpdateHiddenArgs = {
-  page: string;
-  expression: string;
-};
-
 export async function updatePageHidden({ page, expression }: UpdateHiddenArgs) {
   const filePath = getFilePath(page);
   await updateHiddenExpression(filePath, expression);
   await gitAdd(filePath);
-  return "void";
 }
 
+/**
+ * Checkout a new branch for the migration.
+ */
 export async function checkoutBranch() {
   const branchName = `v4-automatic-tracks-migration-${Date.now()}`;
   await asyncExec(`git checkout -b ${branchName}`);
   return branchName;
 }
 
-export function gitStatus() {
-  return asyncExec("git status");
-}
-
+/**
+ * Add a file to the git index.
+ *
+ * @param filePath
+ */
 export function gitAdd(filePath: string) {
   return asyncExec(`git add ${filePath}`);
 }
 
+/**
+ * Commit the changes to the git repository with a messages indicating that the migration was automatic.
+ */
 export function gitCommit() {
   return asyncExec(`git commit -m "Automatic tracks migration"`);
 }
+
+/**
+ * Push the changes on a new branch to the remote repository.
+ */
 export function gpsup() {
   return asyncExec(`git push --set-upstream origin HEAD`);
 }
 
+/**
+ * Create a draft pull request for the changes.
+ * @param branchName The name of the branch from which to create a pull request.
+ */
 export async function draftPullRequest(branchName: string) {
   return fetch(
     "https://altinn.studio/repos/api/v1/repos/mikaelrss/newcomer-sogndal/pulls",
@@ -62,6 +76,12 @@ export async function draftPullRequest(branchName: string) {
   );
 }
 
+/**
+ * Use JQ to update the hidden property in the layout file.
+ *
+ * @param filePath
+ * @param expression
+ */
 function updateHiddenExpression(filePath: string, expression: string) {
   const command = `jq '.data  += {"hidden": ${expression}}' ${filePath}`;
   return asyncExec(command, (result) => {
@@ -69,11 +89,13 @@ function updateHiddenExpression(filePath: string, expression: string) {
   });
 }
 
+/**
+ * Get the file path for a specific layout page.
+ *
+ * @param pageName
+ */
 function getFilePath(pageName: string) {
-  console.log("Get file path: ", pageName);
-  const files = readdirSync(".", {
-    recursive: true,
-  }) as string[];
+  const files = readdirSync(".", { recursive: true }) as string[];
   return files.filter(
     (file) =>
       file.includes(`/${pageName}.json`) &&

@@ -1,6 +1,11 @@
 import { readdirSync } from "node:fs";
 import { exec } from "node:child_process";
 
+/**
+ * Find all the valid data model paths in the given directory.
+ *
+ * @param path
+ */
 export function parseValidDataModelPaths(path = "./") {
   let validDataModelPaths: string[] = [];
   readdirSync(`${path}/models`).forEach(async (file) => {
@@ -22,6 +27,11 @@ export function parseValidDataModelPaths(path = "./") {
   return validDataModelPaths;
 }
 
+/**
+ * Find all the files that implement the IPageOrder interface.
+ *
+ * @param path
+ */
 export function findPageOrderFiles(path = "./"): Promise<string[]> {
   const command = `find ${path} -name '*.cs' ! -name 'Program.cs' -exec grep -l 'IPageOrder' {} +`;
   return new Promise((resolve, reject) => {

@@ -1,3 +1,10 @@
+/**
+ * An OpenAI function that specifies the parameters for the updatePageHidden function.
+ * This is used to get a desired output from the OpenAI model. Instead of forcing the AI
+ * to respond with JSON, and parsing this JSON to something that can be used in the code,
+ * we can use this function to let the AI specify which page should be updated with which
+ * hidden expression.
+ */
 export const updatePageHiddenFn = {
   name: "updatePageHidden",
   description:

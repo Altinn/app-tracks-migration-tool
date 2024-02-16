@@ -1,18 +1,15 @@
 import OpenAI from "openai";
-// @ts-expect-error -
-import { ChatCompletionMessageParam } from "openai/src/resources";
 import {
   checkoutBranch,
   draftPullRequest,
   gitCommit,
-  gitStatus,
   gpsup,
   updatePageHidden,
 } from "./gitea/repo-updater";
 import { updatePageHiddenFn } from "./openai/functions/updatePageHidden";
 import { fileAsString, findArgByName } from "./cli";
 import { findPageOrderFiles, parseValidDataModelPaths } from "./altinn";
-import { getArguments } from "./openai/functions";
+import { getFunctionCalls } from "./openai/functions";
 
 const MODEL = "gpt-4-1106-preview";
 const API_VERSION = process.env["OPEN_AI_API_VERSION"];
@@ -39,7 +36,7 @@ async function main() {
    * The following messages are the C# code that the user should extract the logic from.
    * The last message is a description of what the user should do.
    */
-  const messages: ChatCompletionMessageParam[] = [
+  const messages: OpenAI.ChatCompletionMessageParam[] = [
     {
       role: "system",
       content: `You are a helpful programming assistant which provides answers that are short and concise.
@@ -88,13 +85,17 @@ async function main() {
     ],
   });
 
-  const branchName = await checkoutBranch(findArgByName("path"));
-  await gitStatus();
-
+  const branchName = await checkoutBranch();
+  const functionCalls = getFunctionCalls(chat);
   /**
    * Each iteration updates a specific file with a hidden expression calculated by GPT-4.
    */
-  for (const args of getArguments(chat)) {
+  if (!functionCalls) {
+    throw new Error(
+      "The AI determined that there should be no calls to the function",
+    );
+  }
+  for (const args of functionCalls) {
     await updatePageHidden(args);
   }
 
