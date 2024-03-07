@@ -1,4 +1,5 @@
 import m from "minimist";
+import progress from "cli-progress";
 
 const args: Record<string, string> = m(process.argv.slice(2));
 
@@ -21,3 +22,5 @@ export async function fileAsString(filePath: string): Promise<string> {
   const file = Bun.file(filePath);
   return file.text();
 }
+
+export const ProgressBar = new progress.SingleBar({}, progress.Presets.shades_classic);

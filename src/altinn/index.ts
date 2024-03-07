@@ -13,11 +13,15 @@ export function parseValidDataModelPaths(path = "./") {
       if (file.endsWith(".metadata.json")) {
         const modelFile = Bun.file(`${path}/models/${file}`);
         const metadata = await modelFile.json();
-        let allKeys = [];
+        let allKeys: string[] = [];
         try {
           allKeys = Object.keys(metadata.Elements);
         } catch (e) {
-          allKeys = Object.keys(metadata.elements);
+          try {
+            allKeys = Object.keys(metadata.elements);
+          } catch (e) {
+            allKeys = [];
+          }
         }
         const dataModelName = allKeys[0];
         validDataModelPaths.push(
@@ -28,6 +32,7 @@ export function parseValidDataModelPaths(path = "./") {
       }
     });
   } catch (e) {
+    // @ts-expect-error errors are unknown
     console.log("Could not get valid data model paths", e.message);
   }
   return validDataModelPaths;
@@ -45,7 +50,6 @@ export function findPageOrderFiles(path = "./"): Promise<string[]> {
       const files = stdout.split("\n").filter(Boolean);
       resolve(files);
       if (error) {
-        console.log("error", error);
         resolve([]);
       }
     });
