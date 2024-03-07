@@ -1,8 +1,11 @@
 import OpenAI from "openai";
 import {
+  cd,
   checkoutBranch,
+  checkoutNewBranch,
   draftPullRequest,
   gitCommit,
+  gitPull,
   gpsup,
   updatePageHidden,
 } from "./gitea/repo-updater";
@@ -10,6 +13,10 @@ import { updatePageHiddenFn } from "./openai/functions/updatePageHidden";
 import { fileAsString, findArgByName } from "./cli";
 import { findPageOrderFiles, parseValidDataModelPaths } from "./altinn";
 import { getFunctionCalls } from "./openai/functions";
+import {
+  findReposForUpdater,
+  initializeRepository,
+} from "./gitea/altinn-repo-fetcher.ts";
 
 const MODEL = "gpt-4-1106-preview";
 const API_VERSION = process.env["OPEN_AI_API_VERSION"];
@@ -23,12 +30,16 @@ const client = new OpenAI({
   defaultHeaders: { "api-key": API_KEY },
 });
 
-async function main() {
-  const validDataModelPaths = parseValidDataModelPaths(findArgByName("path"));
-  const files = await findPageOrderFiles(findArgByName("path"));
+async function updateRepository(path: string) {
+  await checkoutBranch("master");
+  await gitPull();
+
+  const validDataModelPaths = parseValidDataModelPaths(path);
+  const files = await findPageOrderFiles(path);
 
   if (files.length === 0) {
-    throw new Error("No files found");
+    console.log("No files found. The repository does not need to be updated.");
+    return;
   }
 
   /**
@@ -85,7 +96,9 @@ async function main() {
     ],
   });
 
-  const branchName = await checkoutBranch();
+  const branchName = await checkoutNewBranch(
+    `v4-automatic-tracks-migration-${Date.now()}`,
+  );
   const functionCalls = getFunctionCalls(chat);
   /**
    * Each iteration updates a specific file with a hidden expression calculated by GPT-4.
@@ -106,4 +119,13 @@ async function main() {
   }
 }
 
-main();
+const repos = await findReposForUpdater();
+const rootDirectory = process.cwd();
+
+// TODO: filter out repositories that already have received a PR from the AI.
+for (const repo of repos) {
+  await cd(rootDirectory);
+  await initializeRepository(repo);
+  await updateRepository("./App");
+  console.log("Current working directory: ", process.cwd());
+}

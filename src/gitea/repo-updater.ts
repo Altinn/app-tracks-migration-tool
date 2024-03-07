@@ -21,14 +21,50 @@ export async function updatePageHidden({ page, expression }: UpdateHiddenArgs) {
 }
 
 /**
- * Checkout a new branch for the migration.
+ * Checkout an existing branch
  */
-export async function checkoutBranch() {
-  const branchName = `v4-automatic-tracks-migration-${Date.now()}`;
+export async function checkoutBranch(branchName?: string) {
+  return asyncExec(`git checkout ${branchName}`);
+}
+
+/**
+ * Checkout a new branch for the migration.
+ * @param branchName
+ */
+export async function checkoutNewBranch(branchName: string) {
   await asyncExec(`git checkout -b ${branchName}`);
   return branchName;
 }
 
+/**
+ * Pull latest changes from the remote repository.
+ */
+export async function gitPull() {
+  await asyncExec("git pull");
+}
+
+/**
+ * Clone a repository from a URL.
+ * @param url
+ */
+export async function gitClone(url: string) {
+  return asyncExec(`git clone ${url}`);
+}
+
+/**
+ * Get the status of the git repository.
+ */
+export async function gitStatus() {
+  return asyncExec("git status");
+}
+
+/**
+ * Change the current working directory.
+ * @param path
+ */
+export async function cd(path: string) {
+  process.chdir(path);
+}
 /**
  * Add a file to the git index.
  *

@@ -4,6 +4,7 @@
   "main": "index.js",
   "dependencies": {
     "minimist": "^1.2.8",
+    "node-jq": "^4.3.0",
     "openai": "^4.22.0"
   },
   "license": "MIT",
