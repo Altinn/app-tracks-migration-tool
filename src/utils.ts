@@ -1,11 +1,11 @@
 import { exec } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { logger } from "./logger.ts";
 
 export function asyncExec(command: string, cb?: (stdout: string) => void) {
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout) => {
       if (error) {
-        console.log(`error: [${command}]`, error);
+        logger.error({ error, command }, "Async execute failed");
         reject(error);
       }
       cb?.(stdout);

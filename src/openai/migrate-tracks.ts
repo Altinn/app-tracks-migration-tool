@@ -2,13 +2,14 @@ import {
   checkoutBranch,
   checkoutNewBranch,
   draftPullRequest,
+  gitAdd,
   gitCommit,
   gitPull,
   gpsup,
 } from "../gitea/repo-updater.ts";
 import { findPageOrderFiles, parseValidDataModelPaths } from "../altinn";
 import OpenAI from "openai";
-import { fileAsString, findArgByName } from "../cli.ts";
+import { fileAsString, findArgByName, ProgressBar } from "../cli.ts";
 import { updatePageHiddenFn } from "./functions/updatePageHidden.ts";
 import { getFunctionCalls } from "./functions";
 import {
@@ -16,6 +17,8 @@ import {
   removeReferencesToPageOrder,
   updatePageHidden,
 } from "../upgrader";
+import type { Repo } from "../gitea/altinn-repo-fetcher.ts";
+import { logger } from "../logger.ts";
 
 const MODEL = "gpt-4-1106-preview";
 const API_VERSION = process.env["OPEN_AI_API_VERSION"];
@@ -29,15 +32,17 @@ const client = new OpenAI({
   defaultHeaders: { "api-key": API_KEY },
 });
 
-export async function updateRepository(path: string) {
+const projectPath = "./App";
+
+export async function updateRepository(repo: Repo) {
   await checkoutBranch("master");
   await gitPull();
 
-  const validDataModelPaths = parseValidDataModelPaths(path);
-  const files = await findPageOrderFiles(path);
+  const validDataModelPaths = parseValidDataModelPaths(projectPath);
+  const files = await findPageOrderFiles(projectPath);
 
   if (files.length === 0) {
-    console.log("No files found. The repository does not need to be updated.");
+    // console.log("No files found. The repository does not need to be updated.");
     return;
   }
 
@@ -69,6 +74,7 @@ export async function updateRepository(path: string) {
     });
   }
 
+  logger.info({ repo }, "Running AI analysis on repository");
   const chat = await client.chat.completions.create({
     model: MODEL,
     temperature: 0.3,
@@ -95,9 +101,8 @@ export async function updateRepository(path: string) {
     ],
   });
 
-  const branchName = await checkoutNewBranch(
-    `v4-automatic-tracks-migration-${Date.now()}`,
-  );
+  const branchName = `v4-automatic-tracks-migration-${Date.now()}`;
+  await checkoutNewBranch(branchName);
   const functionCalls = getFunctionCalls(chat);
   /**
    * Each iteration updates a specific file with a hidden expression calculated by GPT-4.
@@ -113,13 +118,15 @@ export async function updateRepository(path: string) {
 
   for (const file of files) {
     await deleteFile(file);
+    await gitAdd(file);
   }
 
   await removeReferencesToPageOrder("./App/Program.cs");
+  await gitAdd("./App/Program.cs");
 
   if (!findArgByName("dry-run")) {
     await gitCommit();
     await gpsup();
-    await draftPullRequest(branchName);
+    await draftPullRequest(repo, branchName);
   }
 }

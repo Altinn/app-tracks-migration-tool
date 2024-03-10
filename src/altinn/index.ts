@@ -1,5 +1,6 @@
 import { readdirSync } from "node:fs";
 import { exec } from "node:child_process";
+import { logger } from "../logger.ts";
 
 /**
  * Find all the valid data model paths in the given directory.
@@ -33,7 +34,7 @@ export function parseValidDataModelPaths(path = "./") {
     });
   } catch (e) {
     // @ts-expect-error errors are unknown
-    console.log("Could not get valid data model paths", e.message);
+    logger.warn({ message: e.message }, "Could not get valid data model paths");
   }
   return validDataModelPaths;
 }
