@@ -35,6 +35,16 @@ export async function gitClone(url: string) {
   return asyncExec(`git clone ${url}`);
 }
 
+export async function isRepoEmpty() {
+  const stdout = await asyncExec("ls -a");
+  return (
+    stdout.length === 10 &&
+    stdout.includes(".git") &&
+    stdout.includes("..") &&
+    stdout.includes(".")
+  );
+}
+
 /**
  * Change the current working directory.
  * @param path
@@ -83,7 +93,7 @@ export async function draftPullRequest(repo: Repo, branchName: string) {
       base: "master",
       head: branchName,
       title: "Automatic tracks migration (generated with AI)",
-      body: "This PR is generated with an AI tool. This tool uses LLMs to look at the contents of files implementing IPageOrder and then generates the necessary code changes to preserve the behavior with dynamic expressions.",
+      body: `This PR is generated with an AI tool. This tool uses LLMs to look at the contents of files implementing IPageOrder and then generates the necessary code changes to preserve the behavior with dynamic expressions. This means that the behavior of the application could possibly be changed. Make sure that you test your application before merging this PR, as the logic might not be 100% accurate.`,
     }),
   });
 

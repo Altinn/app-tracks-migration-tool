@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import { constants } from "node:fs";
 import { cd, gitClone } from "./repo-updater.ts";
+import { logger } from "../logger.ts";
 
 const BASE_URL = process.env["GITEA_BASE_URL"];
 const GITEA_TOKEN = process.env["GITEA_TOKEN"];
@@ -41,13 +42,79 @@ export type Repo = {
   url: string;
   owner: string;
 };
-export async function findReposForUpdater(): Promise<Repo[]> {
-  const url = `${BASE_URL}/user/repos`;
+
+export async function collectAllRepos(): Promise<Repo[]> {
+  let page = 1;
+  let repos: Repo[] = [];
+  let newRepos: Repo[] = [];
+  do {
+    logger.info({ page }, "Fetching repos");
+    newRepos = await findReposForUpdater(page);
+    repos = [...repos, ...newRepos];
+    page++;
+  } while (newRepos.length != 0);
+  return repos;
+}
+
+export async function collectAllStarredRepos(): Promise<Set<number>> {
+  let page = 0;
+  let repos: Repo[] = [];
+  let newRepos: Repo[] = [];
+  do {
+    logger.info({ page, newRepos: newRepos.length }, "Fetching starred repos");
+    newRepos = await getStarredRepos(page);
+    repos = [...repos, ...newRepos];
+    page++;
+  } while (newRepos.length != 0);
+  return new Set(repos.map((repo) => repo.id));
+}
+
+export async function getStarredRepos(page: number): Promise<Repo[]> {
+  const url = `${BASE_URL}/user/starred?page=${page}&limit=999`;
   const response = await fetch(url, {
     headers: HEADERS,
   });
   if (!response.ok) {
-    throw new Error("Failed to fetch teams");
+    throw new Error("Failed to fetch starred repos");
+  }
+
+  const repos = (await response.json()) as GiteaRepository[];
+  return repos?.map((r) => ({
+    id: r.id,
+    name: r.name,
+    url: r.clone_url,
+    owner: r.owner.username,
+  }));
+}
+
+export async function starRepo(repo: Repo) {
+  const url = `${BASE_URL}/user/starred/${repo.owner}/${repo.name}`;
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: HEADERS,
+  });
+  if (!response.ok) {
+    logger.error(
+      {
+        status: response.status,
+        statusText: response.statusText,
+        repo,
+        url,
+        response: await response.json(),
+      },
+      "Failed to star repo",
+    );
+    throw new Error("Failed to star repo");
+  }
+}
+
+export async function findReposForUpdater(page: number): Promise<Repo[]> {
+  const url = `${BASE_URL}/user/repos?page=${page}&limit=50`;
+  const response = await fetch(url, {
+    headers: HEADERS,
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch repos");
   }
 
   const repos = (await response.json()) as GiteaRepository[];
@@ -85,7 +152,15 @@ export async function repoHasTracksMigrationPR(repo: Repo) {
     headers: HEADERS,
   });
   if (!response.ok) {
-    throw new Error("Failed to fetch teams");
+    logger.error(
+      { status: response.status, message: response.statusText, repo },
+      "Failed to fetch PR for repo",
+    );
+    // TODO: This should be handled better.
+    if (response.status === 404) {
+      return true;
+    }
+    throw new Error("Failed to fetch PR for repo");
   }
 
   const pulls = (await response.json()) as PullRequest[];

@@ -1,28 +1,39 @@
-import { cd } from "./gitea/repo-updater";
+import { cd, isRepoEmpty } from "./gitea/repo-updater";
 import {
-  findReposForUpdater,
+  collectAllRepos,
   initializeRepository,
-  repoHasTracksMigrationPR,
 } from "./gitea/altinn-repo-fetcher.ts";
 import { updateRepository } from "./openai/migrate-tracks.ts";
-import { ProgressBar } from "./cli.ts";
+import { findArgByName, ProgressBar } from "./cli.ts";
+import { getProcessedRepos, storeRepo } from "./database/repositories.ts";
 
 const ROOT_DIR = process.cwd();
 
-const repos = await findReposForUpdater();
+const repos = await collectAllRepos();
+const processedRepos = await getProcessedRepos();
+const processedSet = new Set(processedRepos.map((r) => r.repoId));
 
 const reposToProcess = [];
 for (const repo of repos) {
-  if (!(await repoHasTracksMigrationPR(repo))) {
+  const hasBeenProcessed = processedSet.has(repo.id);
+  if (!hasBeenProcessed) {
     reposToProcess.push(repo);
   }
 }
+
 ProgressBar.start(reposToProcess.length, 0);
 
-for (let i = 0; i < reposToProcess.length; i++) {
+for (const repo of reposToProcess) {
   await cd(ROOT_DIR);
-  await initializeRepository(reposToProcess[i]);
-  await updateRepository(reposToProcess[i]);
+  await initializeRepository(repo);
+  if (await isRepoEmpty()) {
+    await storeRepo(repo, false);
+    continue;
+  }
+  if (!findArgByName("dry-run")) {
+    const createdPr = await updateRepository(repo);
+    await storeRepo(repo, createdPr);
+  }
   ProgressBar.increment();
 }
 ProgressBar.stop();

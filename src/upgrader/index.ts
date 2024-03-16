@@ -37,9 +37,7 @@ export async function removeReferencesToPageOrder(filePath: string) {
  */
 function updateHiddenExpression(filePath: string, expression: string) {
   const command = `jq '.data  += {"hidden": ${expression}}' ${filePath}`;
-  return asyncExec(command, (result) => {
-    Bun.write(filePath, result);
-  });
+  return asyncExec(command, (result) => Bun.write(filePath, result));
 }
 
 /**

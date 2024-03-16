@@ -1,7 +1,10 @@
 import { exec } from "node:child_process";
 import { logger } from "./logger.ts";
 
-export function asyncExec(command: string, cb?: (stdout: string) => void) {
+export function asyncExec(
+  command: string,
+  cb?: (stdout: string) => void,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout) => {
       if (error) {

@@ -9,7 +9,7 @@ import {
 } from "../gitea/repo-updater.ts";
 import { findPageOrderFiles, parseValidDataModelPaths } from "../altinn";
 import OpenAI from "openai";
-import { fileAsString, findArgByName, ProgressBar } from "../cli.ts";
+import { fileAsString, findArgByName } from "../cli.ts";
 import { updatePageHiddenFn } from "./functions/updatePageHidden.ts";
 import { getFunctionCalls } from "./functions";
 import {
@@ -34,7 +34,14 @@ const client = new OpenAI({
 
 const projectPath = "./App";
 
-export async function updateRepository(repo: Repo) {
+/**
+ * This Function runs code analysis on a repository and creates a PR if there are migrations
+ * needed.
+ *
+ * @param repo - The repository to analyse.
+ * @return boolean - Returns whether the update created a PR in the database.
+ */
+export async function updateRepository(repo: Repo): Promise<boolean> {
   await checkoutBranch("master");
   await gitPull();
 
@@ -43,7 +50,7 @@ export async function updateRepository(repo: Repo) {
 
   if (files.length === 0) {
     // console.log("No files found. The repository does not need to be updated.");
-    return;
+    return false;
   }
 
   /**
@@ -103,15 +110,16 @@ export async function updateRepository(repo: Repo) {
 
   const branchName = `v4-automatic-tracks-migration-${Date.now()}`;
   await checkoutNewBranch(branchName);
+
   const functionCalls = getFunctionCalls(chat);
-  /**
-   * Each iteration updates a specific file with a hidden expression calculated by GPT-4.
-   */
   if (!functionCalls) {
     throw new Error(
       "The AI determined that there should be no calls to the function",
     );
   }
+  /**
+   * Each iteration updates a specific file with a hidden expression calculated by GPT-4.
+   */
   for (const args of functionCalls) {
     await updatePageHidden(args);
   }
@@ -129,4 +137,6 @@ export async function updateRepository(repo: Repo) {
     await gpsup();
     await draftPullRequest(repo, branchName);
   }
+
+  return true;
 }

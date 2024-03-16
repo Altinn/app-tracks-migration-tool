@@ -34,7 +34,7 @@ export function parseValidDataModelPaths(path = "./") {
     });
   } catch (e) {
     // @ts-expect-error errors are unknown
-    logger.warn({ message: e.message }, "Could not get valid data model paths");
+    logger.trace({ message: e.message }, "Could not get valid data model paths");
   }
   return validDataModelPaths;
 }
@@ -45,7 +45,7 @@ export function parseValidDataModelPaths(path = "./") {
  * @param path
  */
 export function findPageOrderFiles(path = "./"): Promise<string[]> {
-  const command = `find ${path} -name '*.cs' ! -name 'Program.cs' -exec grep -l 'IPageOrder' {} +`;
+  const command = `find ${path} -name '*.cs' ! -name 'Program.cs' ! -name 'Startup.cs' -exec grep -l 'IPageOrder' {} +`;
   return new Promise((resolve) => {
     exec(command, (error, stdout) => {
       const files = stdout.split("\n").filter(Boolean);
