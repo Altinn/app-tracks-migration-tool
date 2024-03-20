@@ -1,4 +1,4 @@
-name: "Test all"
+name: "Migrate tracks for apps"
 
 on:
   schedule:
