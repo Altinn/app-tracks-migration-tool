@@ -31,7 +31,7 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PW: ${{ secrets.DB_PW }}
           DB_NAME: ${{ secrets.DB_NAME }}
-        run: bun run ../src/index.ts --path App --dry-run
+        run: bun run ../src/index.ts --path App
 
       - name: Test result
         working-directory: ./apps
