@@ -8,6 +8,7 @@
     "minimist": "^1.2.8",
     "node-jq": "^4.3.0",
     "openai": "^4.22.0",
+    "pino": "^8.19.0",
     "postgres": "^3.4.3"
   },
   "license": "MIT",
