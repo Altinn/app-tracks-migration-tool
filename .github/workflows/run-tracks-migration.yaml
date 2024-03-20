@@ -33,11 +33,6 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
         run: bun run ../src/index.ts --path App --dry-run
 
-      - name: Start DGM
-        working-directory: dgm-ansvarlig
-        run: |
-          cp -r src/Digdir.Dgm.Gravferden.Api.Fake/Files ./Files
-          dotnet user-secrets set "Dgm:Maskinporten:EncodedJwk" ${{ secrets.MASKINPORTEN_JWK }} --project App
-          dotnet user-secrets set "Dgm:Maskinporten:ClientId" ${{ secrets.MASKINPORTEN_CLIENT_ID }} --project App
-          dotnet run --project App &
-          dotnet run --project src/Digdir.Dgm.Gravferden.Api.Fake &
+      - name: Test result
+        working-directory: ./apps
+        run: ls -al && cd newcomer-sogndal && git status
