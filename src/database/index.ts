@@ -1,9 +1,15 @@
-import { createClient } from "@libsql/client";
+import postgres from "postgres";
 
-const DB_URL = process.env["DB_URL"] ?? "http://localhost:8080";
-const DB_AUTH_TOKEN = process.env["DB_AUTH_TOKEN"];
+const DB_HOST = process.env["DB_HOST"];
+const DB_NAME = process.env["DB_NAME"];
+const DB_USER = process.env["DB_USER"];
+const DB_PW = process.env["DB_PW"];
 
-export const client = createClient({
-  url: DB_URL,
-  authToken: DB_AUTH_TOKEN,
+export const sql = postgres({
+  host: DB_HOST,
+  port: 5432,
+  database: DB_NAME,
+  user: DB_USER,
+  password: DB_PW,
+  ssl: true,
 });

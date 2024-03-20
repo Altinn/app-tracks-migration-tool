@@ -1,13 +1,11 @@
 import type { Repo } from "../gitea/altinn-repo-fetcher";
 import { logger } from "../logger.ts";
-import { client } from "./index.ts";
+import { sql } from "./index.ts";
 
 export async function storeRepo(repo: Repo, didMigrate: boolean) {
   try {
-    await client.execute({
-      sql: "INSERT INTO repositories (name, owner, repo_id, did_migrate) VALUES (?, ?, ?, ?)",
-      args: [repo.name, repo.owner, repo.id, didMigrate ? 1 : 0],
-    });
+    await sql`INSERT INTO repositories (name, owner, repo_id, did_migrate) 
+              VALUES (${repo.name}, ${repo.owner}, ${repo.id}, ${didMigrate})`;
   } catch (error) {
     // @ts-expect-error
     if (error.code === "SQLITE_CONSTRAINT") {
@@ -21,7 +19,15 @@ export async function storeRepo(repo: Repo, didMigrate: boolean) {
   }
 }
 
-type RowTuple = [number, string, string, number, string, number];
+type RowData = {
+  id: number;
+  name: string;
+  owner: string;
+  repo_id: number;
+  created_at: string;
+  did_migrate: number;
+};
+
 export type ProcessedRepo = {
   id: number;
   name: string;
@@ -32,18 +38,15 @@ export type ProcessedRepo = {
 };
 
 export async function getProcessedRepos(): Promise<ProcessedRepo[]> {
-  const result = await client.execute("SELECT * FROM repositories");
+  const result = await sql`SELECT * FROM repositories`;
 
-  const toJSON = result.toJSON();
-
-  return toJSON.rows.map(
-    ([id, name, owner, repo_id, created_at, did_migrate]: RowTuple) => ({
-      id,
-      name,
-      owner,
-      repoId: repo_id,
-      createdAt: created_at,
-      didMigrate: did_migrate === 1,
-    }),
-  );
+  // @ts-expect-error - The type definition for the Row type is incorrect
+  return result.map((row: RowData) => ({
+    id: row.id,
+    name: row.name,
+    owner: row.owner,
+    repoId: row.repo_id,
+    createdAt: row.created_at,
+    didMigrate: row.did_migrate,
+  }));
 }

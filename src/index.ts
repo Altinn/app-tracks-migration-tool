@@ -37,3 +37,4 @@ for (const repo of reposToProcess) {
   ProgressBar.increment();
 }
 ProgressBar.stop();
+process.exit();

@@ -68,6 +68,13 @@ export async function updateRepository(repo: Repo): Promise<boolean> {
         Valid functions to use are: equals, notEquals, greaterThan, lessThan, greaterThanEq, lessThanEq, concat, and, or,
         if, contains, notContains, commaContains, startsWith, endsWith, lowerCase, upperCase, stringLength, text, language,
         displayValue, round, instanceContext, frontendSettings, dataModel, component. 
+        
+        Documentation for some of the functions:
+        if: The function can be called in two different ways: with 2 or 4 arguments. In alternative 1, the return value of the function will be the 
+        value given as the second argument if the first argument is true (true). If not, it returns the value null. In alternative 2, the return value of
+        the function will be the value given as the second argument if the first argument is true (true). If not, it returns the value given in the
+        fourth argument. You must always provide the string "else" as the third argument if you want to call the function with 4 arguments.
+        
         Example: \`"Page1": ["equals" ["dataModel", "funeral.isDead"], true]\``,
     },
   ];
