@@ -13,6 +13,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: oleksiyrudenko/gha-git-credentials@v2-latest
         with:
+          global: true
           token: ${{ secrets.GITEA_TOKEN }}
           actor: altinn_sa_ai
 
