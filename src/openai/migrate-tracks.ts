@@ -70,10 +70,18 @@ export async function updateRepository(repo: Repo): Promise<boolean> {
         displayValue, round, instanceContext, frontendSettings, dataModel, component. 
         
         Documentation for some of the functions:
-        if: The function can be called in two different ways: with 2 or 4 arguments. In alternative 1, the return value of the function will be the 
+        if: can be called in two different ways: with 2 or 4 arguments. In alternative 1, the return value of the function will be the 
         value given as the second argument if the first argument is true (true). If not, it returns the value null. In alternative 2, the return value of
         the function will be the value given as the second argument if the first argument is true (true). If not, it returns the value given in the
         fourth argument. You must always provide the string "else" as the third argument if you want to call the function with 4 arguments.
+        not: This function takes in a boolean value or something that can be converted to a boolean value and returns the opposite boolean value
+        greaterThan: is the first number greater than the second number?
+        greaterThanEq: Is the first number greater than or equal to the second number?
+        lessThan: Is the first number less than the second number?
+        lessThanEq: Is the first number less than or equal to the second number?
+        concat: takes 0 or more strings as arguments and returns a string where all the strings in the arguments are concatenated
+        and: Are all the arguments true?
+        or: Is at least one of the arguments true?
         
         Example: \`"Page1": ["equals" ["dataModel", "funeral.isDead"], true]\``,
     },

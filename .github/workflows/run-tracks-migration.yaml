@@ -1,0 +1,43 @@
+name: "Test all"
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+
+jobs:
+  migrate-tracks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oven-sh/setup-bun@v1
+
+      - name: Install deps
+        run: bun install --production --no-save
+
+      - name: create working directory
+        run: mkdir -p apps
+
+      - name: Run migration script
+        working-directory: ./apps
+        env:
+          OPEN_API_KEY: ${{ secrets.OPEN_API_KEY }}
+          OPEN_AI_MODEL: ${{ secrets.OPEN_AI_MODEL }}
+          OPEN_AI_API_VERSION: ${{ secrets.OPEN_AI_API_VERSION }}
+          OPEN_AI_API_ENDPOINT: ${{ secrets.OPEN_AI_API_ENDPOINT }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_BASE_URL: ${{ secrets.GITEA_BASE_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PW: ${{ secrets.DB_PW }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+        run: bun run ../src/index.ts --path App --dry-run
+
+      - name: Start DGM
+        working-directory: dgm-ansvarlig
+        run: |
+          cp -r src/Digdir.Dgm.Gravferden.Api.Fake/Files ./Files
+          dotnet user-secrets set "Dgm:Maskinporten:EncodedJwk" ${{ secrets.MASKINPORTEN_JWK }} --project App
+          dotnet user-secrets set "Dgm:Maskinporten:ClientId" ${{ secrets.MASKINPORTEN_CLIENT_ID }} --project App
+          dotnet run --project App &
+          dotnet run --project src/Digdir.Dgm.Gravferden.Api.Fake &
