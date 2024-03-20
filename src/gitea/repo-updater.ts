@@ -32,7 +32,11 @@ export async function gitPull() {
  * @param url
  */
 export async function gitClone(url: string) {
-  return asyncExec(`git clone ${url}`);
+  const urlWithCredentials = url.replace(
+    "https://altinn.studio",
+    `https://${GITEA_TOKEN}:x-oauth-basic@altinn.studio`,
+  );
+  return asyncExec(`git clone ${urlWithCredentials}`);
 }
 
 export async function isRepoEmpty() {

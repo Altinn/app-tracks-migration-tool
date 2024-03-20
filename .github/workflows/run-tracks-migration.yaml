@@ -11,11 +11,6 @@ jobs:
     steps:
       - uses: oven-sh/setup-bun@v1
       - uses: actions/checkout@v3
-      - uses: oleksiyrudenko/gha-git-credentials@v2-latest
-        with:
-          global: true
-          token: ${{ secrets.GITEA_TOKEN }}
-          actor: altinn_sa_ai
 
       - name: Install deps
         run: bun install --production --no-save
