@@ -12,6 +12,11 @@ jobs:
       - uses: oven-sh/setup-bun@v1
       - uses: actions/checkout@v3
 
+      - name: Configure Git
+        run: |
+          git config --global user.name "Altinn AI [Bot]"
+          git config --global user.email "noreply-test-ai@digdir.no"
+
       - name: Install deps
         run: bun install --production --no-save
 
