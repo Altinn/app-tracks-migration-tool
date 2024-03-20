@@ -32,7 +32,7 @@ for (const repo of reposToProcess) {
   }
   if (!findArgByName("dry-run")) {
     const createdPr = await updateRepository(repo);
-    // await storeRepo(repo, createdPr);
+    await storeRepo(repo, createdPr);
   }
   ProgressBar.increment();
 }
