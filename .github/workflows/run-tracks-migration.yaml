@@ -40,4 +40,4 @@ jobs:
 
       - name: Test result
         working-directory: ./apps
-        run: ls -al && cd newcomer-sogndal && git status
+        run: ls -al
